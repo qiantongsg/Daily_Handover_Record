@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pile Works Shift Handover Record</title>
+  <style>
+    :root{
+      --border:#111;
+      --muted:#666;
+      --bg:#fff;
+      --soft:#f3f4f6;
+      --font: 12.5px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      padding:18px;
+      font-family: Arial, Helvetica, sans-serif;
+      background:#e9ecef;
+      color:#111;
+    }
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin:0 auto 14px;
+      max-width: 1100px;
+    }
+    .toolbar .left, .toolbar .right{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    button{
+      border:1px solid var(--border);
+      background:#fff;
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    button.primary{background:#111;color:#fff}
+    button.danger{border-color:#b91c1c;color:#b91c1c}
+    button:active{transform:translateY(1px)}
+    .pill{
+      border:1px solid #c9ccd1;
+      background:#fff;
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:#222;
+      white-space:nowrap;
+    }
+    .wrap{max-width: 1100px; margin:0 auto;}
+    .page{
+      background:var(--bg);
+      border:1px solid #cfd3d7;
+      border-radius:14px;
+      padding:18px;
+      box-shadow:0 8px 30px rgba(0,0,0,.08);
+    }
+    h1{
+      font-size:18px;
+      margin:0 0 12px;
+      letter-spacing:.2px;
+      text-align:center;
+      line-height:1.2;
+    }
+    h1 .cn{display:block;font-size:14px;font-weight:800;margin-top:4px}
+    .meta{
+      display:grid;
+      grid-template-columns: 1.1fr 1.1fr 1.2fr;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .meta .box{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px;
+    }
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    label.small{font-size:12px;color:#111;font-weight:800;}
+    .hint{font-size:11px;color:var(--muted); margin-top:4px;}
+    input[type="text"], input[type="number"], input[type="date"], textarea, select{
+      width:100%;
+      border:1px solid #c9ccd1;
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:13px;
+      background:#fff;
+      outline:none;
+    }
+    input[readonly]{background:#f8fafc}
+    textarea{min-height:80px; resize:vertical}
+    .checks{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .checks .opt{
+      display:flex; gap:6px; align-items:center;
+      border:1px solid #c9ccd1;
+      border-radius:999px;
+      padding:6px 10px;
+      background:#fff;
+      font-size:12px;
+    }
+    .section{
+      margin-top:14px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .section-header{
+      background: var(--soft);
+      padding:10px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid var(--border);
+    }
+    .section-header .title{
+      font-weight:900;
+      font-size:13px;
+      line-height:1.25;
+    }
+    .section-header .title span{
+      display:block;
+      font-weight:700;
+      color:var(--muted);
+      font-size:12px;
+      margin-top:2px;
+    }
+    .section-header .actions{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+    .section-body{padding:10px 10px 12px;}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      font-size: var(--font);
+    }
+    th, td{
+      border:1px solid var(--border);
+      padding:8px;
+      vertical-align:top;
+    }
+    th{
+      background:#fff;
+      font-weight:900;
+      text-align:left;
+      font-size:12px;
+    }
+    th .cn{
+      display:block;
+      font-weight:700;
+      color:var(--muted);
+      font-size:11px;
+      margin-top:2px;
+    }
+    .cell{display:grid; gap:6px;}
+    .muted{color:var(--muted); font-size:11px;}
+    .yn{display:flex; gap:8px; flex-wrap:wrap;}
+    .yn label{
+      display:flex; align-items:center; gap:6px;
+      padding:6px 10px;
+      border:1px solid #c9ccd1;
+      border-radius:999px;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      background:#fff;
+    }
+    .yn input{margin:0}
+    .mini-actions{display:flex; gap:8px; align-items:center; justify-content:center;}
+    details{
+      border:1px solid #c9ccd1;
+      background:#fff;
+      border-radius:12px;
+      padding:10px 12px;
+      margin: 10px 0 0;
+    }
+    details summary{cursor:pointer; font-weight:900; font-size:13px;}
+    .sign{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:14px;
+    }
+    .sign .box{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px;
+    }
+    .footnote{margin-top:10px; font-size:11px; color:var(--muted);}
+    .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:10px;}
+    .inline2{display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:end;}
+    .right-align{text-align:right}
+    @media print{
+      body{background:#fff; padding:0}
+      .toolbar{display:none !important}
+      .page{box-shadow:none; border:none; border-radius:0; padding:0}
+      .wrap{max-width: none}
+      details{display:none}
+      input, select, textarea{border:1px solid #111 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
+      .section-header{background:#f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
+      button{display:none !important}
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div class="left">
+      <span class="pill">Online Fillable Form / 在线填写表单</span>
+      <span class="pill" id="saveState">Not saved / 未保存</span>
+      <span class="pill" id="serverState">Server: Not connected / 服务器未连接</span>
+    </div>
+    <div class="right">
+      <button type="button" onclick="newForm()">New / 新建</button>
+      <button type="button" onclick="saveDraft()" class="primary">Save Draft / 暂存</button>
+      <button type="button" onclick="clearDraft()">Clear Draft / 清除暂存</button>
+      <button type="button" onclick="window.print()">Print A4 / 打印</button>
+      
+      
+      
+      
+      <button type="button" class="primary" onclick="confirmAndSubmit()">Confirm & Submit / 确认并保存</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="page">
+      <h1>
+        PILE WORKS SHIFT HANDOVER RECORD
+        <span class="cn">打桩工程交接班记录表</span>
+      </h1>
+
+      <div class="meta">
+        <div class="box">
+          <label class="small">Date / 日期</label>
+          <input type="date" id="meta_date" />
+          <div class="hint">Used to generate Record ID / 用于生成表格编号</div>
+        </div>
+
+        <div class="box">
+          <label class="small">Shift / 班次</label>
+          <div class="checks" style="margin-top:8px">
+            <label class="opt"><input type="radio" name="meta_shift" value="Day to Night"> Day Shift → Night Shift</label>
+            <label class="opt"><input type="radio" name="meta_shift" value="Night to Day"> Night Shift → Day Shift</label>
+          </div>
+          <div class="hint">Choose one / 二选一</div>
+        </div>
+
+        <div class="box">
+          <label class="small">Record ID (DB ID) / 表格编号（数据库ID）</label>
+          <div class="inline2" style="margin-top:8px">
+            <input type="text" id="record_id" readonly />
+            <button type="button" onclick="regenerateRecordId()">Regenerate / 重新生成</button>
+          </div>
+          <div class="hint">Format: YYYY-MM-DD-NO / 格式：年-月-日-NO</div>
+        </div>
+      </div>
+
+      <details>
+        <summary>History / 历史交接表（点击展开）</summary>
+        <div class="grid2" style="margin-top:10px">
+          <div>
+            <label class="small">Select from list / 下拉选择</label>
+            <select id="history_select"></select>
+            <div class="hint">Auto from server (if connected) / 服务器连接时自动获取</div>
+          </div>
+          <div>
+            <label class="small">Or enter Record ID / 或手输编号</label>
+            <input type="text" id="history_input" placeholder="e.g., 2026-01-18-02" />
+            <div class="hint">Supports both dropdown & manual input / 同时支持下拉与手输</div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px; justify-content:flex-end">
+          <button type="button" onclick="refreshHistory()">Refresh List / 刷新列表</button>
+          <button type="button" class="primary" onclick="loadHistory()">Load / 加载</button>
+        </div>
+      </details>
+
+      <div class="section" id="sec1">
+        <div class="section-header">
+          <div class="title">1. CASING INSTALLATION <span>下护筒</span></div>
+          <div class="actions"><button type="button" onclick="addRow('casing')">+ Add Row / 增行</button></div>
+        </div>
+        <div class="section-body">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:12%">Region<span class="cn">区域</span></th>
+                <th style="width:12%">Drawing No.<span class="cn">图号</span></th>
+                <th style="width:14%">Pile Index<span class="cn">桩号（数字）</span></th>
+                <th style="width:20%">Full Pile No.<span class="cn">完整桩号</span></th>
+                <th style="width:18%">ECC Check<span class="cn">护筒ECC检查</span></th>
+                <th style="width:18%">Platform Done<span class="cn">平台完成</span></th>
+                <th style="width:6%" class="right-align">Del<span class="cn">删除</span></th>
+              </tr>
+            </thead>
+            <tbody id="tbl_casing"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="sec2">
+        <div class="section-header">
+          <div class="title">2. PILE BORING DETAILS <span>成孔情况</span></div>
+          <div class="actions"><button type="button" onclick="addRow('boring')">+ Add Row / 增行</button></div>
+        </div>
+        <div class="section-body">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:10%">Region<span class="cn">区域</span></th>
+                <th style="width:10%">Drawing No.<span class="cn">图号</span></th>
+                <th style="width:12%">Pile Index<span class="cn">桩号（数字）</span></th>
+                <th style="width:16%">Full Pile No.<span class="cn">完整桩号</span></th>
+                <th style="width:12%">Start Depth (m)<span class="cn">本班起始深度</span></th>
+                <th style="width:12%">End Depth (m)<span class="cn">本班结束深度</span></th>
+                <th style="width:12%">Design Toe (m)<span class="cn">设计桩底</span></th>
+                <th style="width:12%">RTO Toe Confirmed<span class="cn">RTO检查确认</span></th>
+                <th style="width:10%">Need Koden<span class="cn">需Koden</span></th>
+                <th style="width:4%" class="right-align">Del<span class="cn">删除</span></th>
+              </tr>
+            </thead>
+            <tbody id="tbl_boring"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="sec3">
+        <div class="section-header">
+          <div class="title">3. REBAR CAGE LOWERING <span>下钢筋笼</span></div>
+          <div class="actions"><button type="button" onclick="addRow('rebar')">+ Add Row / 增行</button></div>
+        </div>
+        <div class="section-body">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:10%">Region<span class="cn">区域</span></th>
+                <th style="width:10%">Drawing No.<span class="cn">图号</span></th>
+                <th style="width:12%">Pile Index<span class="cn">桩号（数字）</span></th>
+                <th style="width:16%">Full Pile No.<span class="cn">完整桩号</span></th>
+                <th style="width:12%">Total Sections<span class="cn">总节数(1-8)</span></th>
+                <th style="width:36%">Lowered Section<span class="cn">已下节数（多选：8→1 + Hanging Bar）</span></th>
+                <th style="width:4%" class="right-align">Del<span class="cn">删除</span></th>
+              </tr>
+            </thead>
+            <tbody id="tbl_rebar"></tbody>
+          </table>
+          <div class="footnote muted">Select total sections first; lowered options auto-match (default = total). / 先选总节数，后面自动生成可选项（默认=总节数）。</div>
+        </div>
+      </div>
+
+      <div class="section" id="sec4">
+        <div class="section-header">
+          <div class="title">4. CONCRETE CASTING <span>混凝土浇筑</span></div>
+          <div class="actions"><button type="button" onclick="addRow('concrete')">+ Add Row / 增行</button></div>
+        </div>
+        <div class="section-body">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:12%">Region<span class="cn">区域</span></th>
+                <th style="width:12%">Drawing No.<span class="cn">图号</span></th>
+                <th style="width:14%">Pile Index<span class="cn">桩号（数字）</span></th>
+                <th style="width:18%">Full Pile No.<span class="cn">完整桩号</span></th>
+                <th style="width:16%">Theoretical (m³)<span class="cn">理论方量</span></th>
+                <th style="width:16%">Casted (m³)<span class="cn">已浇方量</span></th>
+                <th style="width:16%">Completed<span class="cn">完成</span></th>
+                <th style="width:6%" class="right-align">Del<span class="cn">删除</span></th>
+              </tr>
+            </thead>
+            <tbody id="tbl_concrete"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="sec5">
+        <div class="section-header">
+          <div class="title">Remarks / Unfinished Items <span>备注 / 未完成事项</span></div>
+          <div class="actions"><button type="button" onclick="clearRemarks()">Clear / 清空</button></div>
+        </div>
+        <div class="section-body">
+          <label class="small">1.</label>
+          <textarea id="remarks_1" placeholder="Write here / 填写内容..."></textarea>
+          <label class="small" style="margin-top:8px">2.</label>
+          <textarea id="remarks_2" placeholder="Write here / 填写内容..."></textarea>
+          <label class="small" style="margin-top:8px">3.</label>
+          <textarea id="remarks_3" placeholder="Write here / 填写内容..."></textarea>
+        </div>
+      </div>
+
+      <div class="sign">
+        <div class="box">
+          <div class="row">
+            <div style="flex:1">
+              <label class="small">Handover By / 交班人</label>
+              <input type="text" id="handover_by" placeholder="Name / 姓名" />
+            </div>
+            <div style="flex:1">
+              <label class="small">Time / 时间</label>
+              <input type="text" id="handover_time" placeholder="e.g., 07:30" />
+            </div>
+          </div>
+        </div>
+        <div class="box">
+          <div class="row">
+            <div style="flex:1">
+              <label class="small">Taken Over By / 接班人</label>
+              <input type="text" id="takeover_by" placeholder="Name / 姓名" />
+            </div>
+            <div style="flex:1">
+              <label class="small">Time / 时间</label>
+              <input type="text" id="takeover_time" placeholder="e.g., 19:30" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footnote">
+        Draft saves locally only (LocalStorage). Submit uploads to your database via API endpoints. / 暂存仅本地保存；“确认并保存”通过接口上传数据库。
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ===== Backend config =====
+  const API_BASE = ""; // Set to your backend domain if needed, e.g. "https://yourdomain.com"
+  const API = {
+    list: (date) => `${API_BASE}/api/pile-handover/list?date=${encodeURIComponent(date||"")}`,
+    get:  (id)   => `${API_BASE}/api/pile-handover/get?id=${encodeURIComponent(id||"")}`,
+    save:         `${API_BASE}/api/pile-handover/save`
+  };
+
+  // ===== Local draft =====
+  const STORAGE_KEY = "pile_handover_v2_draft";
+  const LOCAL_SEQ_PREFIX = "pile_handover_seq_";
+
+  const REGION_OPTS = ["", "GTC", "T5A"];
+  const DRAWING_OPTS = ["", "E03", "W03", "W22", "E27"];
+
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+  function qs(sel){ return document.querySelector(sel); }
+  function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+  function setSavedState(saved){
+    const el = qs("#saveState");
+    el.textContent = saved ? "Saved / 已暂存" : "Not saved / 未保存";
+    el.style.borderColor = saved ? "#111" : "#c9ccd1";
+  }
+  function setServerState(ok, msg){
+    const el = qs("#serverState");
+    el.textContent = ok ? "Server: OK / 服务器正常" : (msg || "Server: Not connected / 服务器未连接");
+    el.style.borderColor = ok ? "#111" : "#c9ccd1";
+  }
+  function markUnsaved(){ setSavedState(false); }
+
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  function selectHTML(options, value){
+    const opts = options.map(o => `<option value="${escapeHtml(o)}" ${o===value?"selected":""}>${escapeHtml(o)}</option>`).join("");
+    return `<select>${opts}</select>`;
+  }
+
+  function ynGroup(name, value){
+    const yesId = uid(), noId = uid();
+    return `
+      <div class="yn">
+        <label for="${yesId}"><input id="${yesId}" type="radio" name="${name}" value="Yes" ${value==="Yes"?"checked":""}> Yes</label>
+        <label for="${noId}"><input id="${noId}" type="radio" name="${name}" value="No" ${value==="No"?"checked":""}> No</label>
+      </div>`;
+  }
+
+  function buildPileFull(region, drawing, pileIndex){
+    const r = (region||"").trim();
+    const d = (drawing||"").trim();
+    let n = (pileIndex ?? "").toString().trim();
+    if(n === "") return "";
+    n = n.replace(/[^\d]/g, "");
+    if(n === "") return "";
+    const padded = n.padStart(3, "0").slice(-3);
+    if(!r || !d) return "";
+    return `${r}-${d}-${padded}`;
+  }
+
+  function clampIndex(val){
+    let n = parseInt(val, 10);
+    if(isNaN(n)) return "";
+    if(n < 0) n = 0;
+    if(n > 999) n = 999;
+    return String(n);
+  }
+
+  function renderRow(table, row){
+    const rowId = row.id || uid();
+    const tr = document.createElement("tr");
+    tr.dataset.rowId = rowId;
+    tr.dataset.table = table;
+
+    const regionSel = document.createElement("div");
+    regionSel.innerHTML = selectHTML(REGION_OPTS, row.region||"");
+    const drawingSel = document.createElement("div");
+    drawingSel.innerHTML = selectHTML(DRAWING_OPTS, row.drawing||"");
+
+    const pileInput = document.createElement("input");
+    pileInput.type = "number"; pileInput.min="0"; pileInput.max="999"; pileInput.step="1";
+    pileInput.value = (row.pileIndex ?? "");
+    pileInput.placeholder = "0-999";
+
+    const fullInput = document.createElement("input");
+    fullInput.type = "text"; fullInput.readOnly = true;
+    fullInput.value = buildPileFull(row.region, row.drawing, row.pileIndex);
+
+    function onPileRelatedChange(){
+      const region = regionSel.querySelector("select").value;
+      const drawing = drawingSel.querySelector("select").value;
+      pileInput.value = clampIndex(pileInput.value);
+      fullInput.value = buildPileFull(region, drawing, pileInput.value);
+      markUnsaved();
+    }
+    regionSel.querySelector("select").addEventListener("change", onPileRelatedChange);
+    drawingSel.querySelector("select").addEventListener("change", onPileRelatedChange);
+    pileInput.addEventListener("input", onPileRelatedChange);
+    pileInput.addEventListener("change", onPileRelatedChange);
+
+    const delBtn = document.createElement("button");
+    delBtn.type="button"; delBtn.className="danger"; delBtn.textContent="Del";
+    delBtn.title="Delete row / 删除该行";
+    delBtn.addEventListener("click", () => {
+      if(!confirm("Delete this row? / 删除该行？")) return;
+      tr.remove();
+      markUnsaved();
+    });
+
+    function tdWith(el){
+      const td = document.createElement("td");
+      const wrap = document.createElement("div");
+      wrap.className = "cell";
+      wrap.appendChild(el);
+      td.appendChild(wrap);
+      return td;
+    }
+    function tdYN(name, value){
+      const td = document.createElement("td");
+      td.innerHTML = ynGroup(name, value||"");
+      return td;
+    }
+    function tdNum(value, step="0.01"){
+      const td = document.createElement("td");
+      const inp = document.createElement("input");
+      inp.type="number"; inp.step=step; inp.value=(value ?? "");
+      td.appendChild(inp);
+      return td;
+    }
+
+    tr.appendChild(tdWith(regionSel));
+    tr.appendChild(tdWith(drawingSel));
+
+    const pileTd = document.createElement("td");
+    const pileWrap = document.createElement("div"); pileWrap.className="cell";
+    pileWrap.appendChild(pileInput);
+    const hint = document.createElement("div"); hint.className="muted"; hint.textContent="Auto pad to 3 digits / 自动补0为3位";
+    pileWrap.appendChild(hint);
+    pileTd.appendChild(pileWrap);
+    tr.appendChild(pileTd);
+
+    tr.appendChild(tdWith(fullInput));
+
+    if(table==="casing"){
+      tr.appendChild(tdYN(`casing_${rowId}_ecc`, row.ecc));
+      tr.appendChild(tdYN(`casing_${rowId}_platform`, row.platform));
+    }
+    if(table==="boring"){
+      tr.appendChild(tdNum(row.startDepth));
+      tr.appendChild(tdNum(row.endDepth));
+      tr.appendChild(tdNum(row.designToe));
+      tr.appendChild(tdYN(`boring_${rowId}_rtoToeConfirmed`, row.rtoToeConfirmed)); // merged
+      tr.appendChild(tdYN(`boring_${rowId}_koden`, row.needKoden));
+    }
+    if(table==="rebar"){
+      const totalSel = document.createElement("select");
+      for(let i=0;i<=8;i++){
+        const opt=document.createElement("option");
+        opt.value = i===0 ? "" : String(i);
+        opt.textContent = i===0 ? "" : String(i);
+        if(String(row.totalSections||"")===opt.value) opt.selected=true;
+        totalSel.appendChild(opt);
+      }
+      const totalTd = document.createElement("td");
+      const totalWrap=document.createElement("div"); totalWrap.className="cell";
+      totalWrap.appendChild(totalSel);
+      totalTd.appendChild(totalWrap);
+      tr.appendChild(totalTd);
+
+      const loweredTd = document.createElement("td");
+      const loweredWrap=document.createElement("div"); loweredWrap.className="cell";
+      loweredTd.appendChild(loweredWrap);
+      tr.appendChild(loweredTd);
+
+      function renderLoweredOptions(){
+        const total = parseInt(totalSel.value||"0",10);
+        loweredWrap.innerHTML="";
+        if(!total || total<1){
+          const m=document.createElement("div"); m.className="muted"; m.textContent="Select total sections first / 先选总节数";
+          loweredWrap.appendChild(m); return;
+        }
+        const yn=document.createElement("div"); yn.className="yn";
+
+        // descending order
+        for(let i=total;i>=1;i--){
+          const id=uid();
+          const label=document.createElement("label");
+          label.htmlFor=id;
+          const cb=document.createElement("input");
+          cb.type="checkbox"; cb.value=String(i);
+          label.appendChild(cb);
+          label.appendChild(document.createTextNode(" "+String(i)));
+          yn.appendChild(label);
+        }
+
+        // Hanging Bar option
+        const hbId=uid();
+        const hbLabel=document.createElement("label");
+        hbLabel.htmlFor=hbId;
+        const hb=document.createElement("input");
+        hb.type="checkbox"; hb.value="Hanging Bar";
+        hbLabel.appendChild(hb);
+        hbLabel.appendChild(document.createTextNode(" Hanging Bar"));
+        yn.appendChild(hbLabel);
+
+        loweredWrap.appendChild(yn);
+        yn.querySelectorAll("input").forEach(cb=>{
+          cb.addEventListener("change", ()=>markUnsaved());
+        });
+      }
+
+      totalSel.addEventListener("change", ()=>{
+        row.loweredSection = totalSel.value || "";
+        renderLoweredOptions();
+        markUnsaved();
+      });
+      renderLoweredOptions();
+
+    }
+    if(table==="concrete"){
+      tr.appendChild(tdNum(row.theoreticalVol, "0.001"));
+      tr.appendChild(tdNum(row.castedVol, "0.001"));
+      tr.appendChild(tdYN(`concrete_${rowId}_completed`, row.completed));
+    }
+
+    const delTd=document.createElement("td"); delTd.className="right-align";
+    const mini=document.createElement("div"); mini.className="mini-actions";
+    mini.appendChild(delBtn);
+    delTd.appendChild(mini);
+    tr.appendChild(delTd);
+
+    tr.querySelectorAll("input, select, textarea").forEach(el=>{
+      el.addEventListener("input", ()=>markUnsaved());
+      el.addEventListener("change", ()=>markUnsaved());
+    });
+
+    return tr;
+  }
+
+  function addRow(table, rowData=null){
+    const tbody = qs(`#tbl_${table}`);
+    const row = Object.assign({id: uid()}, rowData||{});
+    tbody.appendChild(renderRow(table, row));
+    markUnsaved();
+  }
+
+  function clearRemarks(){
+    if(!confirm("Clear remarks? / 确定清空备注？")) return;
+    qs("#remarks_1").value=""; qs("#remarks_2").value=""; qs("#remarks_3").value="";
+    markUnsaved();
+  }
+
+  function newForm(){
+    if(!confirm("Start a new blank form? (Unsaved changes will be lost) / 新建空表？（未保存内容会丢失）")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    initDefaults();
+    setSavedState(false);
+  }
+
+  function collectMeta(){
+    const date = qs("#meta_date").value || "";
+    const shift = (qsa('input[name="meta_shift"]').find(r=>r.checked)?.value) || "";
+    const recordId = qs("#record_id").value || "";
+    return {date, shift, recordId};
+  }
+
+  function collectTable(table){
+    const rows=[];
+    qsa(`#tbl_${table} tr`).forEach(tr=>{
+      const region = tr.querySelector("td:nth-child(1) select")?.value || "";
+      const drawing = tr.querySelector("td:nth-child(2) select")?.value || "";
+      const pileIndex = tr.querySelector("td:nth-child(3) input")?.value || "";
+      const fullPileNo = tr.querySelector("td:nth-child(4) input")?.value || "";
+      const rowId = tr.dataset.rowId || uid();
+
+      if(table==="casing"){
+        const ecc = tr.querySelector(`input[name^="casing_${rowId}_ecc"]:checked`)?.value || "";
+        const platform = tr.querySelector(`input[name^="casing_${rowId}_platform"]:checked`)?.value || "";
+        rows.push({rowId, region, drawing, pileIndex, fullPileNo, ecc, platform});
+      }
+      if(table==="boring"){
+        const startDepth = tr.querySelector("td:nth-child(5) input")?.value || "";
+        const endDepth = tr.querySelector("td:nth-child(6) input")?.value || "";
+        const designToe = tr.querySelector("td:nth-child(7) input")?.value || "";
+        const rtoToeConfirmed = tr.querySelector(`input[name^="boring_${rowId}_rtoToeConfirmed"]:checked`)?.value || "";
+        const needKoden = tr.querySelector(`input[name^="boring_${rowId}_koden"]:checked`)?.value || "";
+        rows.push({rowId, region, drawing, pileIndex, fullPileNo, startDepth, endDepth, designToe, rtoToeConfirmed, needKoden});
+      }
+      if(table==="rebar"){
+        const totalSections = tr.querySelector("td:nth-child(5) select")?.value || "";
+        const loweredSection = tr.querySelector(`input[name^="rebar_${rowId}_loweredSection"]:checked`)?.value || "";
+        const hangingBar = tr.querySelector(`input[name^="rebar_${rowId}_hangingBar"]:checked`)?.value || "";
+        rows.push({rowId, region, drawing, pileIndex, fullPileNo, totalSections, loweredSection, hangingBar});
+      }
+      if(table==="concrete"){
+        const theoreticalVol = tr.querySelector("td:nth-child(5) input")?.value || "";
+        const castedVol = tr.querySelector("td:nth-child(6) input")?.value || "";
+        const completed = tr.querySelector(`input[name^="concrete_${rowId}_completed"]:checked`)?.value || "";
+        rows.push({rowId, region, drawing, pileIndex, fullPileNo, theoreticalVol, castedVol, completed});
+      }
+    });
+    return rows;
+  }
+
+  function collectAll(){
+    const meta = collectMeta();
+    return {
+      meta,
+      casing: collectTable("casing"),
+      boring: collectTable("boring"),
+      rebar: collectTable("rebar"),
+      concrete: collectTable("concrete"),
+      remarks: [qs("#remarks_1").value||"", qs("#remarks_2").value||"", qs("#remarks_3").value||""],
+      sign: {
+        handoverBy: qs("#handover_by").value || "",
+        handoverTime: qs("#handover_time").value || "",
+        takeoverBy: qs("#takeover_by").value || "",
+        takeoverTime: qs("#takeover_time").value || ""
+      }
+    };
+  }
+
+  function applyAll(data){
+    qs("#meta_date").value = data?.meta?.date || "";
+    qsa('input[name="meta_shift"]').forEach(r => r.checked = (r.value === (data?.meta?.shift||"")));
+    qs("#record_id").value = data?.meta?.recordId || "";
+
+    ["casing","boring","rebar","concrete"].forEach(t=>{
+      const tbody=qs(`#tbl_${t}`);
+      tbody.innerHTML="";
+      const rows=Array.isArray(data?.[t])?data[t]:[];
+      if(rows.length===0) addRow(t);
+      else rows.forEach(r=>addRow(t,r));
+    });
+
+    const rem=data?.remarks||[];
+    qs("#remarks_1").value=rem[0]||"";
+    qs("#remarks_2").value=rem[1]||"";
+    qs("#remarks_3").value=rem[2]||"";
+
+    qs("#handover_by").value=data?.sign?.handoverBy||"";
+    qs("#handover_time").value=data?.sign?.handoverTime||"";
+    qs("#takeover_by").value=data?.sign?.takeoverBy||"";
+    qs("#takeover_time").value=data?.sign?.takeoverTime||"";
+
+    setSavedState(true);
+  }
+
+  function saveDraft(){
+    const data = collectAll();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    setSavedState(true);
+  }
+
+  function clearDraft(){
+    if(!confirm("Clear saved draft in this browser? / 确定清除本浏览器暂存？")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    setSavedState(false);
+    initDefaults();
+  }
+
+  function exportJSON(){
+    const data = collectAll();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    const d = data?.meta?.date || "date";
+    const id = data?.meta?.recordId || "record";
+    a.download = `pile_handover_${d}_${id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  qs("#importFile").addEventListener("change", async (e)=>{
+    const file=e.target.files && e.target.files[0];
+    if(!file) return;
+    try{
+      const text=await file.text();
+      const data=JSON.parse(text);
+      applyAll(data);
+      markUnsaved();
+    }catch(err){
+      alert("Import failed / 导入失败: " + err.message);
+    }finally{
+      e.target.value="";
+    }
+  });
+
+  function initDefaults(){
+    qs("#meta_date").value="";
+    qsa('input[name="meta_shift"]').forEach(r=>r.checked=false);
+    qs("#record_id").value="";
+
+    ["casing","boring","rebar","concrete"].forEach(t=>{
+      qs(`#tbl_${t}`).innerHTML="";
+      addRow(t); // default ONE row
+    });
+
+    qs("#remarks_1").value=""; qs("#remarks_2").value=""; qs("#remarks_3").value="";
+    qs("#handover_by").value=""; qs("#handover_time").value="";
+    qs("#takeover_by").value=""; qs("#takeover_time").value="";
+
+    qs("#history_select").innerHTML=`<option value="">(empty)</option>`;
+    qs("#history_input").value="";
+    setSavedState(false);
+  }
+
+  function loadDraft(){
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    try{
+      const data=JSON.parse(raw);
+      applyAll(data);
+      return true;
+    }catch{
+      return false;
+    }
+  }
+
+  // ===== Record ID =====
+  function getLocalSeq(dateStr){
+    const key = LOCAL_SEQ_PREFIX + dateStr;
+    const n = parseInt(localStorage.getItem(key) || "0", 10);
+    return isNaN(n) ? 0 : n;
+  }
+  function setLocalSeq(dateStr, n){
+    const key = LOCAL_SEQ_PREFIX + dateStr;
+    localStorage.setItem(key, String(n));
+  }
+  function formatNo(n){ return n < 10 ? "0"+n : String(n); }
+
+  async function regenerateRecordId(){
+    const dateStr = qs("#meta_date").value || "";
+    if(!dateStr){ alert("Please select Date first / 请先选择日期"); return; }
+    const datePart = dateStr;
+
+    try{
+      const res = await fetch(API.list(datePart), {method:"GET"});
+      if(res.ok){
+        const js = await res.json();
+        if(js && js.ok && Array.isArray(js.items)){
+          const nextNo = js.items.length + 1;
+          qs("#record_id").value = `${datePart}-${formatNo(nextNo)}`;
+          markUnsaved();
+          await refreshHistory();
+          return;
+        }
+      }
+    }catch(e){ /* ignore */ }
+
+    const cur=getLocalSeq(datePart);
+    const next=cur+1;
+    setLocalSeq(datePart,next);
+    qs("#record_id").value = `${datePart}-${formatNo(next)}`;
+    markUnsaved();
+  }
+
+  qs("#meta_date").addEventListener("change", ()=>{
+    regenerateRecordId();
+    refreshHistory();
+  });
+
+  // ===== History =====
+  async function refreshHistory(){
+    const datePart = qs("#meta_date").value || "";
+    const sel = qs("#history_select");
+    sel.innerHTML = `<option value="">(Loading...)</option>`;
+    try{
+      const res = await fetch(API.list(datePart), {method:"GET"});
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const js = await res.json();
+      if(!js || !js.ok || !Array.isArray(js.items)) throw new Error("Bad response");
+      sel.innerHTML = `<option value="">(Select / 请选择)</option>`;
+      js.items.forEach(item=>{
+        const opt=document.createElement("option");
+        opt.value=item.id || "";
+        const ts=item.savedAt ? ` (${item.savedAt})` : "";
+        opt.textContent=(item.id||"")+ts;
+        sel.appendChild(opt);
+      });
+      setServerState(true);
+    }catch(err){
+      sel.innerHTML = `<option value="">(Server not available / 服务器不可用)</option>`;
+      setServerState(false, "Server: Not connected / 服务器未连接");
+    }
+  }
+
+  async function loadHistory(){
+    const fromSelect = qs("#history_select").value || "";
+    const fromInput = (qs("#history_input").value || "").trim();
+    const id = fromInput || fromSelect;
+    if(!id){ alert("Please select or input Record ID / 请选择或输入表格编号"); return; }
+    try{
+      const res = await fetch(API.get(id), {method:"GET"});
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const js = await res.json();
+      if(!js || !js.ok || !js.data) throw new Error("Bad response");
+      applyAll(js.data);
+      setServerState(true);
+      setSavedState(true);
+      alert("Loaded / 已加载: " + id);
+    }catch(err){
+      setServerState(false, "Server: Not connected / 服务器未连接");
+      alert("Load failed / 加载失败: " + err.message);
+    }
+  }
+
+  // ===== Submit =====
+  function validateBeforeSubmit(data){
+    const errors=[];
+    if(!data.meta.date) errors.push("Date is required / 必须选择日期");
+    if(!data.meta.shift) errors.push("Shift is required / 必须选择班次");
+    if(!data.meta.recordId) errors.push("Record ID is required / 需要表格编号（请重新生成）");
+
+    function validateRows(rows, sectionName){
+      rows.forEach((r,i)=>{
+        const hasAny = Object.values(r).some(v => (v||"").toString().trim() !== "");
+        if(!hasAny) return;
+        const idx = (r.pileIndex||"").toString().replace(/[^\d]/g,"");
+        if(idx==="") errors.push(`${sectionName} row ${i+1}: Pile Index required / 桩号数字必填`);
+        if(r.region && r.drawing && idx!==""){
+          const expect = buildPileFull(r.region, r.drawing, idx);
+          if(!expect) errors.push(`${sectionName} row ${i+1}: Full Pile No invalid / 完整桩号无效`);
+        }
+      });
+    }
+    validateRows(data.casing,"Casing");
+    validateRows(data.boring,"Boring");
+    validateRows(data.rebar,"Rebar");
+    validateRows(data.concrete,"Concrete");
+    return errors;
+  }
+
+  async function confirmAndSubmit(){
+    const data=collectAll();
+    const errs=validateBeforeSubmit(data);
+    if(errs.length){ alert("Please fix:\n- " + errs.join("\n- ")); return; }
+    if(!confirm("Confirm submit to database? / 确认上传并保存到数据库？")) return;
+
+    try{
+      const payload={
+        id: data.meta.recordId,
+        date: data.meta.date,
+        shift: data.meta.shift,
+        data,
+        submittedAt: new Date().toISOString()
+      };
+      const res = await fetch(API.save, {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const js = await res.json().catch(()=> ({}));
+      if(js && js.ok === false) throw new Error(js.message || "Server rejected");
+
+      setServerState(true);
+      setSavedState(true);
+
+      // local seq sync
+      const datePart=data.meta.date;
+      if(datePart){
+        const parts=(data.meta.recordId||"").split("-");
+        const no=parseInt(parts[3] || parts[parts.length-1] || "0",10);
+        if(!isNaN(no) && no > getLocalSeq(datePart)) setLocalSeq(datePart,no);
+      }
+
+      alert("Submitted / 已提交并保存: " + data.meta.recordId);
+      await refreshHistory();
+    }catch(err){
+      setServerState(false, "Server: Not connected / 服务器未连接");
+      alert("Submit failed / 提交失败: " + err.message + "\n\nTip: You can still use Save Draft / 暂存继续可用。");
+    }
+  }
+
+  // expose to buttons
+  window.addRow = addRow;
+  window.clearRemarks = clearRemarks;
+  window.newForm = newForm;
+  window.saveDraft = saveDraft;
+  window.clearDraft = clearDraft;
+  window.exportJSON = exportJSON;
+  window.regenerateRecordId = regenerateRecordId;
+  window.refreshHistory = refreshHistory;
+  window.loadHistory = loadHistory;
+  window.confirmAndSubmit = confirmAndSubmit;
+
+  // startup
+  (function(){
+    initDefaults();
+    const ok=loadDraft();
+    setSavedState(ok);
+    refreshHistory();
+  })();
+</script>
+</body>
+
+</html>
