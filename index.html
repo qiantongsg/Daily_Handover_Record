@@ -1026,6 +1026,400 @@
     refreshHistory();
   })();
 </script>
+
+<script>
+/* ===== SheetDB minimal binding (SAFE OVERRIDE) ===== */
+const SHEETDB = "https://sheetdb.io/api/v1/oak550ec3co34";
+
+const __origConfirmAndSubmit = window.confirmAndSubmit;
+
+window.confirmAndSubmit = async function() {
+  const data = collectAll();
+  const errs = validateBeforeSubmit(data);
+  if (errs.length) {
+    alert("Please fix:\n- " + errs.join("\n- "));
+    return;
+  }
+  if (!confirm("Confirm submit to database? / 确认上传并保存到数据库？")) return;
+
+  try {
+    const now = new Date().toISOString();
+
+    async function post(sheet, row) {
+      await fetch(SHEETDB, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.assign({ sheet: sheet }, row))
+      });
+    }
+
+    await post("handover_records", {
+      record_id: data.meta.recordId,
+      record_date: data.meta.date,
+      shift: data.meta.shift,
+      handover_by: data.sign.handoverBy,
+      handover_time: data.sign.handoverTime,
+      taken_over_by: data.sign.takeoverBy,
+      taken_over_time: data.sign.takeoverTime,
+      remarks: data.remarks.join(" | "),
+      created_at: now,
+      updated_at: now
+    });
+
+    for (const r of data.casing) await post("casing_installations", {
+      record_id: data.meta.recordId,
+      region: r.region,
+      drawing_no: r.drawing,
+      pile_index: r.pileIndex,
+      full_pile_no: r.fullPileNo,
+      ecc_check: r.ecc,
+      platform_done: r.platform,
+      created_at: now
+    });
+
+    for (const r of data.boring) await post("pile_boring", {
+      record_id: data.meta.recordId,
+      region: r.region,
+      drawing_no: r.drawing,
+      pile_index: r.pileIndex,
+      full_pile_no: r.fullPileNo,
+      start_depth: r.startDepth,
+      end_depth: r.endDepth,
+      design_toe: r.designToe,
+      rto_confirmed: r.rtoToeConfirmed,
+      need_koden: r.needKoden,
+      created_at: now
+    });
+
+    for (const r of data.rebar) await post("rebar_cage", {
+      record_id: data.meta.recordId,
+      region: r.region,
+      drawing_no: r.drawing,
+      pile_index: r.pileIndex,
+      full_pile_no: r.fullPileNo,
+      total_sections: r.totalSections,
+      lowered_sections: r.loweredSection,
+      created_at: now
+    });
+
+    for (const r of data.concrete) await post("concrete_casting", {
+      record_id: data.meta.recordId,
+      region: r.region,
+      drawing_no: r.drawing,
+      pile_index: r.pileIndex,
+      full_pile_no: r.fullPileNo,
+      theoretical_volume: r.theoreticalVol,
+      casted_volume: r.castedVol,
+      casting_completed: r.completed,
+      created_at: now
+    });
+
+    setServerState(true);
+    setSavedState(true);
+    alert("Submitted / 已提交并保存: " + data.meta.recordId);
+    await refreshHistory();
+
+  } catch (err) {
+    setServerState(false, "Server: Not connected / 服务器未连接");
+    alert("Submit failed / 提交失败: " + err.message);
+  }
+};
+</script>
+
+
+<script>
+/* ===== SheetDB History (LIST + LOAD) Stable Override ===== */
+(function () {
+  const BASE = "https://sheetdb.io/api/v1/oak550ec3co34";
+
+  function toStr(v) {
+    if (v === null || v === undefined) return "";
+    return String(v);
+  }
+
+  async function fetchSheet(sheetName) {
+    const res = await fetch(BASE + "?sheet=" + encodeURIComponent(sheetName), { method: "GET" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const rows = await res.json();
+    if (!Array.isArray(rows)) throw new Error("Bad response");
+    return rows;
+  }
+
+  // ---- Refresh history list ----
+  window.refreshHistory = async function () {
+    const sel = document.getElementById("history_select");
+    if (!sel) return;
+
+    sel.innerHTML = '<option value="">(Loading...)</option>';
+
+    try {
+      const datePart = (document.getElementById("meta_date")?.value || "").trim();
+      const rows = await fetchSheet("handover_records");
+
+      // Empty array is OK => server connected
+      setServerState(true);
+
+      const filtered = datePart ? rows.filter(r => toStr(r.record_date) === datePart) : rows.slice();
+
+      const ids = filtered
+        .map(r => toStr(r.record_id).trim())
+        .filter(Boolean);
+
+      if (ids.length === 0) {
+        sel.innerHTML = '<option value="">(No records / 无记录)</option>';
+        return;
+      }
+
+      // sort descending (latest first)
+      ids.sort().reverse();
+
+      sel.innerHTML = '<option value="">(Select / 请选择)</option>';
+      ids.forEach(id => {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = id;
+        sel.appendChild(opt);
+      });
+    } catch (err) {
+      console.warn("refreshHistory failed:", err);
+      sel.innerHTML = '<option value="">(Load failed)</option>';
+      setServerState(false, "Server not connected / 服务器未连接");
+    }
+  };
+
+  // ---- Load one record by record_id (and its sub tables) ----
+  window.loadHistory = async function () {
+    const fromSelect = (document.getElementById("history_select")?.value || "").trim();
+    const fromInput = (document.getElementById("history_input")?.value || "").trim();
+    const id = fromInput || fromSelect;
+
+    if (!id) {
+      alert("Please select or input Record ID / 请选择或输入表格编号");
+      return;
+    }
+
+    try {
+      // fetch all sheets (stable, no search quirks)
+      const [mainRows, casingRows, boringRows, rebarRows, concreteRows] = await Promise.all([
+        fetchSheet("handover_records"),
+        fetchSheet("casing_installations"),
+        fetchSheet("pile_boring"),
+        fetchSheet("rebar_cage"),
+        fetchSheet("concrete_casting")
+      ]);
+
+      const main = mainRows.find(r => toStr(r.record_id).trim() === id);
+      if (!main) throw new Error("Record not found: " + id);
+
+      const data = {
+        meta: {
+          date: toStr(main.record_date),
+          shift: toStr(main.shift),
+          recordId: toStr(main.record_id)
+        },
+        casing: casingRows.filter(r => toStr(r.record_id).trim() === id).map(r => ({
+          rowId: "srv_" + Math.random().toString(16).slice(2),
+          region: toStr(r.region),
+          drawing: toStr(r.drawing_no),
+          pileIndex: toStr(r.pile_index),
+          fullPileNo: toStr(r.full_pile_no),
+          ecc: toStr(r.ecc_check),
+          platform: toStr(r.platform_done)
+        })),
+        boring: boringRows.filter(r => toStr(r.record_id).trim() === id).map(r => ({
+          rowId: "srv_" + Math.random().toString(16).slice(2),
+          region: toStr(r.region),
+          drawing: toStr(r.drawing_no),
+          pileIndex: toStr(r.pile_index),
+          fullPileNo: toStr(r.full_pile_no),
+          startDepth: toStr(r.start_depth),
+          endDepth: toStr(r.end_depth),
+          designToe: toStr(r.design_toe),
+          rtoToeConfirmed: toStr(r.rto_confirmed),
+          needKoden: toStr(r.need_koden)
+        })),
+        rebar: rebarRows.filter(r => toStr(r.record_id).trim() === id).map(r => ({
+          rowId: "srv_" + Math.random().toString(16).slice(2),
+          region: toStr(r.region),
+          drawing: toStr(r.drawing_no),
+          pileIndex: toStr(r.pile_index),
+          fullPileNo: toStr(r.full_pile_no),
+          totalSections: toStr(r.total_sections),
+          loweredSection: toStr(r.lowered_sections),
+          hangingBar: "" // legacy field in form; keep blank
+        })),
+        concrete: concreteRows.filter(r => toStr(r.record_id).trim() === id).map(r => ({
+          rowId: "srv_" + Math.random().toString(16).slice(2),
+          region: toStr(r.region),
+          drawing: toStr(r.drawing_no),
+          pileIndex: toStr(r.pile_index),
+          fullPileNo: toStr(r.full_pile_no),
+          theoreticalVol: toStr(r.theoretical_volume),
+          castedVol: toStr(r.casted_volume),
+          completed: toStr(r.casting_completed)
+        })),
+        remarks: toStr(main.remarks).split(" | ").map(s=>s.trim()).filter((_,i)=>i<3),
+        sign: {
+          handoverBy: toStr(main.handover_by),
+          handoverTime: toStr(main.handover_time),
+          takeoverBy: toStr(main.taken_over_by),
+          takeoverTime: toStr(main.taken_over_time)
+        }
+      };
+
+      applyAll(data);
+      setServerState(true);
+      setSavedState(true);
+      alert("Loaded / 已加载: " + id);
+    } catch (err) {
+      console.warn("loadHistory failed:", err);
+      setServerState(false, "Load failed / 加载失败");
+      alert("Load failed / 加载失败: " + err.message);
+    }
+  };
+
+  // auto refresh on load (non-blocking)
+  window.addEventListener("load", () => {
+    try { refreshHistory(); } catch(e){}
+  });
+})();
+</script>
+
+
+<script>
+/* ===== ENHANCEMENTS: overwrite submit, readonly history, enhanced history label ===== */
+(function() {
+  const BASE = "https://sheetdb.io/api/v1/oak550ec3co34";
+
+  async function fetchSheet(sheet) {
+    const res = await fetch(BASE + "?sheet=" + sheet);
+    if (!res.ok) throw new Error("fetch failed");
+    return await res.json();
+  }
+
+  async function deleteByRecordId(sheet, recordId) {
+    await fetch(BASE + "/record_id/" + encodeURIComponent(recordId) + "?sheet=" + sheet, {
+      method: "DELETE"
+    });
+  }
+
+  /* ---------- 1) overwrite submit ---------- */
+  window.confirmAndSubmit = async function() {
+    const data = collectAll();
+    const errs = validateBeforeSubmit(data);
+    if (errs.length) {
+      alert("Please fix:\n- " + errs.join("\n- "));
+      return;
+    }
+    if (!confirm("Confirm submit (overwrite if exists)? / 确认提交并覆盖已有记录？")) return;
+
+    try {
+      const now = new Date().toISOString();
+      const rid = data.meta.recordId;
+
+      const sheets = ["handover_records","casing_installations","pile_boring","rebar_cage","concrete_casting"];
+      for (const s of sheets) await deleteByRecordId(s, rid);
+
+      async function post(sheet, row) {
+        await fetch(BASE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(Object.assign({ sheet: sheet }, row))
+        });
+      }
+
+      await post("handover_records", {
+        record_id: rid,
+        record_date: data.meta.date,
+        shift: data.meta.shift,
+        handover_by: data.sign.handoverBy,
+        handover_time: data.sign.handoverTime,
+        taken_over_by: data.sign.takeoverBy,
+        taken_over_time: data.sign.takeoverTime,
+        remarks: data.remarks.join(" | "),
+        created_at: now,
+        updated_at: now
+      });
+
+      for (const r of data.casing) await post("casing_installations", Object.assign({ record_id: rid, created_at: now }, r));
+      for (const r of data.boring) await post("pile_boring", Object.assign({ record_id: rid, created_at: now }, r));
+      for (const r of data.rebar) await post("rebar_cage", Object.assign({ record_id: rid, created_at: now }, r));
+      for (const r of data.concrete) await post("concrete_casting", Object.assign({ record_id: rid, created_at: now }, r));
+
+      setServerState(true);
+      setSavedState(true);
+      alert("Saved (overwritten) / 已保存（已覆盖）: " + rid);
+      await refreshHistory();
+    } catch (e) {
+      alert("Submit failed: " + e.message);
+      setServerState(false);
+    }
+  };
+
+  /* ---------- 2) readonly history ---------- */
+  function setReadonly(on) {
+    document.querySelectorAll("input,select,textarea").forEach(el => {
+      if (el.id === "history_input" || el.id === "history_select") return;
+      el.disabled = on;
+    });
+    const btn = document.getElementById("btn_edit_history");
+    if (btn) btn.style.display = on ? "inline-block" : "none";
+  }
+
+  const __origLoad = window.loadHistory;
+  window.loadHistory = async function() {
+    await __origLoad();
+    setReadonly(true);
+  };
+
+  window.enableEditHistory = function() {
+    setReadonly(false);
+  };
+
+  window.addEventListener("load", () => {
+    if (!document.getElementById("btn_edit_history")) {
+      const b = document.createElement("button");
+      b.id = "btn_edit_history";
+      b.textContent = "Edit History / 解除只读";
+      b.onclick = enableEditHistory;
+      b.style.display = "none";
+      const bar = document.querySelector(".toolbar") || document.body;
+      bar.appendChild(b);
+    }
+  });
+
+  /* ---------- 3) enhanced history label ---------- */
+  window.refreshHistory = async function() {
+    const sel = document.getElementById("history_select");
+    if (!sel) return;
+    sel.innerHTML = "";
+
+    try {
+      const rows = await fetchSheet("handover_records");
+      setServerState(true);
+
+      rows.sort((a,b)=> (b.record_id||"").localeCompare(a.record_id||""));
+
+      rows.forEach(r => {
+        const id = r.record_id || "";
+        const shift = (r.shift || "").toLowerCase();
+        let tag = "";
+        if (shift.includes("day")) tag = "DtoN";
+        if (shift.includes("night")) tag = "NtoD";
+
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = id + (tag ? " | " + tag : "");
+        sel.appendChild(opt);
+      });
+    } catch (e) {
+      setServerState(false);
+    }
+  };
+
+})();
+</script>
+
 </body>
 
 </html>
